@@ -28,9 +28,6 @@
   .layout-footer-center{
     text-align: center;
   }
-  a{
-    color: white;
-  }
   .layout-nav{
     text-align: right;
   }
@@ -43,8 +40,8 @@
     <Layout>
       <Header>
         <Menu mode="horizontal" theme="dark" active-name="1">
-          <div class="layout-logo">实时工况系统</div>
-          <div class="layout-nav">
+          <div class="layout-logo"><a v-on:click="goToAllBar()" style="color: white">实时工况系统</a></div>
+          <div v-if="loginOrNot" class="layout-nav">
             <!--<Avatar src="https://i.loli.net/2017/08/21/599a521472424.jpg" />-->
             <Avatar icon="person" />
             <Dropdown>
@@ -71,6 +68,9 @@
                 </div>
               </Modal>
             </Dropdown>
+          </div>
+          <div v-else class="layout-nav">
+            <a v-on:click="changeLoginPage()">前往登录</a>
           </div>
         </Menu>
       </Header>
@@ -112,7 +112,7 @@
           </Layout>
         </Content>
       </Layout>
-      <Footer class="layout-footer-center">2011-2016 &copy; TalkingData</Footer>
+      <Footer class="layout-footer-center">2018-cccz1996 &copy; Working Condition System</Footer>
     </Layout>
   </div>
 </template>
@@ -124,21 +124,84 @@
         modal_loading: false,
         modal3: false,
         modal4: false,
-        modal5: false
+        modal5: false,
+        loginOrNot: '',
+        currentUserName: ''
       }
     },
+    mounted(){
+      this.getSession()
+      // this.getUserLoginOrNot()
+    },
     methods: {
-      del () {
-        this.modal_loading = true;
-        setTimeout(() => {
-          this.modal_loading = false;
-          this.modal2 = false;
-          this.$Message.success('Successfully delete');
-        }, 2000);
+      getUserLoginOrNot(){
+        if(this.currentUserName != ''){
+          this.loginOrNot = true;
+        }else{
+          this.loginOrNot = false;
+        }
       },
+      // 判断有没有session
+      getSession(){
+        this.axios({
+          method: 'get',
+          url: '/session'
+        }).then(function (response) {
+          var responseData = response.data;
+          console.log(responseData);
+          if(responseData != '0'){
+            this.$store.dispatch("setUser",responseData);
+            this.currentUserName = this.$store.state.loginUserName;
+            this.loginOrNot = true;
+            console.log(this.loginOrNot);
+          }else{
+            this.$store.dispatch("setUser","");
+            this.currentUserName = this.$store.state.loginUserName;
+            this.loginOrNot = false;
+          }
+        }.bind(this)).catch(function (error) {
+          alert(error);
+        });
+      },
+      // 退出登录
+      del () {
+        this.axios({
+          method: 'get',
+          url: '/loginOut'
+        }).then(function (response) {
+          var responseData = response.data;
+          if(responseData=='1'){
+            this.$store.dispatch("setUser","");
+            this.currentUserName = this.$store.state.loginUserName;
+            this.loginOrNot = false;
+            this.modal2 = false;
+            this.$Message.success('退出成功');
+          }else{
+            this.modal2 = false;
+            this.$Message.warning('退出失败');
+          }
+        }.bind(this)).catch(function (error) {
+          alert(error);
+        });
+        // this.modal_loading = true;
+        // setTimeout(() => {
+        //   this.modal_loading = false;
+        //   this.modal2 = false;
+        //   this.$Message.success('Successfully delete');
+        // }, 2000);
+      },
+      // 跳转登录页面
       changePage(){
         this.$router.push({name: 'login'});
-      }
+      },
+      // header部分跳转首页a标签
+      goToAllBar(){
+        this.$router.push({name: 'allBar'});
+      },
+      // 跳转登录页面
+      changeLoginPage(){
+        this.$router.push({name: 'login'});
+      },
     }
   }
 </script>

@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "echarts": "^4.0.4",
     "iview": "^2.13.0",
     "vue": "^2.5.2",
+    "vue-echarts-v3": "^1.0.19",
     "vue-router": "^3.0.1",
+    "vue-stomp": "0.0.5",
     "vuex": "^3.0.1"
   },
   "devDependencies": {

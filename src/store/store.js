@@ -5,7 +5,8 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    loginUserName: ''
+    loginUserName: '',
+    pageName: ["系统首页"]
   },
   getters: {
 
@@ -13,11 +14,17 @@ export default new Vuex.Store({
   mutations: {
     setLoginUserName(state,name){
       state.loginUserName = name
+    },
+    setPageName(state,name){
+      state.pageName = name
     }
   },
   actions: {
     setUser(context,name){
       context.commit("setLoginUserName",name)
+    },
+    setPage(context,name){
+      context.commit("setPageName",name)
     }
   }
 })

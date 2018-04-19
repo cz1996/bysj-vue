@@ -73,10 +73,10 @@
               this.loginTrue = true;
               this.$store.dispatch("setUser",this.loginName);
               // var test = this.$store.commit("getUser");
-              console.log(this.$store.state.loginUserName);
+              // console.log(this.$store.state.loginUserName);
             }
             if(this.loginTrue){
-              this.$router.push({name: 'allBar'});
+              this.$router.push({name: 'index'});
             }else{
               this.$Message.warning({
                 content:'用户名或密码输入错误，请重新登录',
@@ -101,7 +101,7 @@
 
       // 跳转首页
       goToAllBar(){
-        this.$router.push({name: 'allBar'});
+        this.$router.push({name: 'index'});
       }
     }
   }

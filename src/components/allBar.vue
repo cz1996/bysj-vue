@@ -41,16 +41,16 @@
       <Header>
         <Menu mode="horizontal" theme="dark" active-name="1">
           <div class="layout-logo"><a v-on:click="goToAllBar()" style="color: white">实时工况系统</a></div>
-          <div v-if="loginOrNot" class="layout-nav">
+          <div v-if="pageState.loginUserName != ''" class="layout-nav">
             <!--<Avatar src="https://i.loli.net/2017/08/21/599a521472424.jpg" />-->
             <Avatar icon="person" />
             <Dropdown>
               <a href="javascript:void(0)">
-                程正
+                {{pageState.loginUserName}}
                 <Icon type="arrow-down-b"></Icon>
               </a>
               <DropdownMenu slot="list">
-                <DropdownItem><Button v-on:click="changePage()">个人信息</Button></DropdownItem>
+                <DropdownItem><Button v-on:click="goToUserInfo()">个人信息</Button></DropdownItem>
                 <DropdownItem><Button @click="modal2 = true">退出系统</Button></DropdownItem>
               </DropdownMenu>
 
@@ -76,15 +76,15 @@
       </Header>
       <Layout :style="{padding: '0 50px'}">
         <Breadcrumb :style="{margin: '16px 0'}">
-          <BreadcrumbItem>Home</BreadcrumbItem>
-          <BreadcrumbItem>Components</BreadcrumbItem>
-          <BreadcrumbItem>Layout</BreadcrumbItem>
+          <BreadcrumbItem v-for="(page,index) in pageState.pageName" :key="index">{{page}}</BreadcrumbItem>
+          <!--<BreadcrumbItem>Components</BreadcrumbItem>-->
+          <!--<BreadcrumbItem>Layout</BreadcrumbItem>-->
         </Breadcrumb>
         <Content :style="{padding: '24px 0', minHeight: '280px', background: '#fff'}">
           <Layout>
             <Sider hide-trigger :style="{background: '#fff'}">
-              <Menu active-name="1-2" theme="light" width="auto" :open-names="['1']">
-                <MenuItem name="1">
+              <Menu v-if="pageState.loginUserName != ''" active-name="index" theme="light" width="auto" :open-names="['1']" @on-select="goToDeviceListItem">
+                <MenuItem name="index">
                   <Icon type="ios-navigate"></Icon>
                   系统首页
                 </MenuItem>
@@ -93,8 +93,7 @@
                     <Icon type="ios-keypad"></Icon>
                     我的设备
                   </template>
-                  <MenuItem name="2-1">设备测试</MenuItem>
-                  <MenuItem name="2-2">设备列表</MenuItem>
+                  <MenuItem name="deviceList">设备列表</MenuItem>
                 </Submenu>
                 <Submenu name="3">
                   <template slot="title">
@@ -105,9 +104,16 @@
                   <MenuItem name="3-2">新建已有设备</MenuItem>
                 </Submenu>
               </Menu>
+
+              <Menu v-else active-name="index" theme="light" width="auto" :open-names="['1']" @on-select="goToDeviceListItem">
+                <MenuItem name="index">
+                  <Icon type="ios-navigate"></Icon>
+                  系统首页
+                </MenuItem>
+              </Menu>
             </Sider>
             <Content :style="{padding: '24px', minHeight: '280px', background: '#fff'}">
-              Content
+              <router-view></router-view>
             </Content>
           </Layout>
         </Content>
@@ -125,22 +131,16 @@
         modal3: false,
         modal4: false,
         modal5: false,
-        loginOrNot: '',
-        currentUserName: ''
+        pageState: this.$store.state
       }
+    },
+    watch:{
+
     },
     mounted(){
       this.getSession()
-      // this.getUserLoginOrNot()
     },
     methods: {
-      getUserLoginOrNot(){
-        if(this.currentUserName != ''){
-          this.loginOrNot = true;
-        }else{
-          this.loginOrNot = false;
-        }
-      },
       // 判断有没有session
       getSession(){
         this.axios({
@@ -148,16 +148,10 @@
           url: '/session'
         }).then(function (response) {
           var responseData = response.data;
-          console.log(responseData);
           if(responseData != '0'){
             this.$store.dispatch("setUser",responseData);
-            this.currentUserName = this.$store.state.loginUserName;
-            this.loginOrNot = true;
-            console.log(this.loginOrNot);
           }else{
             this.$store.dispatch("setUser","");
-            this.currentUserName = this.$store.state.loginUserName;
-            this.loginOrNot = false;
           }
         }.bind(this)).catch(function (error) {
           alert(error);
@@ -172,8 +166,6 @@
           var responseData = response.data;
           if(responseData=='1'){
             this.$store.dispatch("setUser","");
-            this.currentUserName = this.$store.state.loginUserName;
-            this.loginOrNot = false;
             this.modal2 = false;
             this.$Message.success('退出成功');
           }else{
@@ -183,25 +175,23 @@
         }.bind(this)).catch(function (error) {
           alert(error);
         });
-        // this.modal_loading = true;
-        // setTimeout(() => {
-        //   this.modal_loading = false;
-        //   this.modal2 = false;
-        //   this.$Message.success('Successfully delete');
-        // }, 2000);
       },
-      // 跳转登录页面
-      changePage(){
-        this.$router.push({name: 'login'});
+      // 跳转个人信息页面
+      goToUserInfo(){
+        this.$router.push({name: 'userInfo'});
       },
       // header部分跳转首页a标签
       goToAllBar(){
-        this.$router.push({name: 'allBar'});
+        this.$router.push({name: 'index'});
       },
       // 跳转登录页面
       changeLoginPage(){
         this.$router.push({name: 'login'});
       },
+      // 跳转设备列表页面
+      goToDeviceListItem(name){
+        this.$router.push({name: name});
+      }
     }
   }
 </script>

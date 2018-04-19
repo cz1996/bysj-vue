@@ -117,7 +117,7 @@
 
       // 跳转首页
       goToAllBar(){
-        this.$router.push({name: 'allBar'});
+        this.$router.push({name: 'index'});
       }
     }
   }

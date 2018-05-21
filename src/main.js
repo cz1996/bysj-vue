@@ -7,9 +7,14 @@ import store from './store/store'
 import router from './router';
 import 'iview/dist/styles/iview.css'
 import axios from './axios'
+import echarts from 'echarts'
+import $ from 'jquery'
+
+axios.defaults.withCredentials = true;
 
 Vue.config.productionTip = false;
 Vue.prototype.axios = axios;
+Vue.prototype.$echarts = echarts;
 
 Vue.use(iView);
 

@@ -8,6 +8,10 @@ import Error from '@/components/error404'
 import DeviceList from '@/components/deviceList'
 import Index from '@/components/index'
 import UserInfo from '@/components/userInfo'
+import AddEqu from '@/components/addEqu'
+import DeviceInfo from '@/components/deviceInfo'
+import EditEquInfo from '@/components/editEquInfo'
+import ChangeEqu from '@/components/changeEqu'
 
 Vue.use(VueRouter);
 
@@ -43,10 +47,30 @@ const routers = [
         component: DeviceList
       },
       {
+        path: '/addEqu',
+        name: 'addEqu',
+        component: AddEqu
+      },
+      {
         path: '/userInfo',
         name: 'userInfo',
         component: UserInfo
-       }
+      },
+      {
+        path: '/deviceInfo',
+        name: 'deviceInfo',
+        component: DeviceInfo
+      },
+      {
+        path: '/editEquInfo',
+        name: 'editEquInfo',
+        component: EditEquInfo
+      },
+     {
+       path: '/changeEqu',
+       name: 'changeEqu',
+       component: ChangeEqu
+     }
     ]
   }
 ];

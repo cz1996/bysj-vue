@@ -37,13 +37,14 @@
 </style>
 <template>
   <div class="allBar">
+    <Back-top></Back-top>
     <Layout>
       <Header>
         <Menu mode="horizontal" theme="dark" active-name="1">
           <div class="layout-logo"><a v-on:click="goToAllBar()" style="color: white">实时工况系统</a></div>
           <div v-if="pageState.loginUserName != ''" class="layout-nav">
             <!--<Avatar src="https://i.loli.net/2017/08/21/599a521472424.jpg" />-->
-            <Avatar icon="person" />
+            <Avatar style="background-color: rgb(214, 194, 188);" icon="person" />
             <Dropdown>
               <a href="javascript:void(0)">
                 {{pageState.loginUserName}}
@@ -83,7 +84,7 @@
         <Content :style="{padding: '24px 0', minHeight: '280px', background: '#fff'}">
           <Layout>
             <Sider hide-trigger :style="{background: '#fff'}">
-              <Menu v-if="pageState.loginUserName != ''" active-name="index" theme="light" width="auto" :open-names="['1']" @on-select="goToDeviceListItem">
+              <Menu ref="leftMenu" v-if="pageState.loginUserName != ''" :open-names="openMenu" :active-name="activeName" theme="light" width="auto" @on-select="goToDeviceListItem">
                 <MenuItem name="index">
                   <Icon type="ios-navigate"></Icon>
                   系统首页
@@ -98,14 +99,14 @@
                 <Submenu name="3">
                   <template slot="title">
                     <Icon type="ios-analytics"></Icon>
-                    新建设备
+                    设备操作
                   </template>
-                  <MenuItem name="3-1">新建测试设备</MenuItem>
-                  <MenuItem name="3-2">新建已有设备</MenuItem>
+                  <MenuItem name="addEqu">新建设备</MenuItem>
+                  <MenuItem name="editEquInfo">修改设备</MenuItem>
                 </Submenu>
               </Menu>
 
-              <Menu v-else active-name="index" theme="light" width="auto" :open-names="['1']" @on-select="goToDeviceListItem">
+              <Menu v-else active-name="index" theme="light" width="auto" @on-select="goToDeviceListItem">
                 <MenuItem name="index">
                   <Icon type="ios-navigate"></Icon>
                   系统首页
@@ -131,16 +132,41 @@
         modal3: false,
         modal4: false,
         modal5: false,
-        pageState: this.$store.state
+        pageState: this.$store.state,
+        openMenu: [],
+        activeName: "index"
+
       }
     },
     watch:{
-
+      // $route(to,from){
+      //   switch (to.name){
+      //     case 'index':
+      //       this.activeName = 'index';
+      //       break;
+      //     case 'deviceList':
+      //       this.activeName = 'deviceList';
+      //       break;
+      //     case 'addEqu':
+      //       this.activeName = 'addEqu';
+      //       break;
+      //   }
+      //   this.$nextTick(function() {
+      //     this.$refs.leftMenu.updateActiveName();
+      //   });
+      // }
     },
     mounted(){
       this.getSession()
     },
     methods: {
+      // getRoundColor(){
+      //   this.personBackColor = '#' +
+      //     (function(color){
+      //       return (color +=  '0123456789abcdef'[Math.floor(Math.random()*16)])
+      //       && (color.length == 6) ?  color : arguments.callee(color);
+      //     })('');
+      // },
       // 判断有没有session
       getSession(){
         this.axios({
@@ -167,6 +193,7 @@
           if(responseData=='1'){
             this.$store.dispatch("setUser","");
             this.modal2 = false;
+            this.$router.push({name: 'index'});
             this.$Message.success('退出成功');
           }else{
             this.modal2 = false;
@@ -188,7 +215,7 @@
       changeLoginPage(){
         this.$router.push({name: 'login'});
       },
-      // 跳转设备列表页面
+      // 跳转设备页面
       goToDeviceListItem(name){
         this.$router.push({name: name});
       }

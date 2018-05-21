@@ -1,35 +1,126 @@
+<style>
+  .fontheader{
+    font-size: 30px;
+    background-color: #d6c2bc;
+    color: white;
+    text-align: center;
+  }
+  .chartBig{
+    width: 100%;
+    overflow: auto;
+  }
+  .chartLessOne{
+    width: 60%;
+    text-align: center;
+    float: left;
+  }
+  .chartLessTwo{
+    width: 40%;
+    text-align: center;
+    background-color: #fbe3dc;
+    color: black;
+    float: left;
+    padding: 20px;
+    margin-top: 55px;
+  }
+  .myChart{
+    margin-left: calc(50% - 250px);
+    width: 500px;
+    height: 300px;
+  }
+  .equName{
+    overflow: auto;
+    border-bottom: 1px solid white;
+  }
+  .equLabel{
+    float: left;
+    width: 40%;
+    text-align: right;
+  }
+  .equData{
+    float: left;
+    width: 60%;
+    text-align: left;
+    padding-left: 10px;
+  }
+  .bigCar{
+    width: 100%;
+  }
+  .demo-carousel{
+    max-width: 1170px;
+    height: 200px;
+    line-height: 200px;
+    color: black;
+    text-align: center;
+    background-color: #fbe3dc;
+    font-size: 20px;
+  }
+</style>
 <template>
   <div>
-    <!--{{indexChartNUmber}}-->
-    <Back-top></Back-top>
-    <Collapse v-model="currEquName">
-      <Panel name="1" style="font-size: 30px;">
+    <div style="width: 100%;">
+      <Carousel class="bigCar">
+        <Carousel-item>
+          <div class="demo-carousel">工况设备实时数据检测系统</div>
+        </Carousel-item>
+        <Carousel-item>
+          <div class="demo-carousel">个人网站：<a target="_blank" href="http://www.cz1996.cn">www.cz1996.cn</a></div>
+        </Carousel-item>
+      </Carousel>
+    </div>
+    <div style="padding-top: 24px;">
+      <div class="fontheader">
         {{indexEquipment.equipmentName}}
-        <div slot="content" style="width: 100%;text-align: center;font-size: 20px;">
-          <p>{{indexEquipment.equipmentDescribe}}</p>
-          <div v-for="(index,item) in indexEquipment.equipmentAttribute">
-            {{index}}
-            <!--<IEcharts :option="optionData"/>-->
+      </div>
+
+      <div style="width: 100%;text-align: center;font-size: 20px;">
+        <p style="font-family: 黑体">{{indexEquipment.equipmentDescribe}}</p>
+        <div v-for="item in indexEquipment.equipmentAttribute">
+          <hr/>
+          <div class="chartBig">
+            <div class="chartLessOne">
+              <div name="myChart" class="myChart"></div>
+            </div>
+            <div class="chartLessTwo">
+              <div class="equName" style="border-top: 1px solid white;">
+                <div class="equLabel">设备名称：</div>
+                <div class="equData">{{item.attrName}}</div>
+              </div>
+              <div class="equName">
+                <div class="equLabel">检测间隔：</div>
+                <div class="equData">{{item.attrTiming}} s</div>
+              </div>
+              <div class="equName">
+                <div class="equLabel">正常数据：</div>
+                <div class="equData">{{item.attrCommon}} 立方米</div>
+              </div>
+              <div class="equName">
+                <div class="equLabel">浮动数据：</div>
+                <div class="equData">{{item.attrFloat}} 立方米</div>
+              </div>
+              <div class="equName">
+                <div class="equLabel">实时数据：</div>
+                <div class="equData" style="color: #18b566">{{item.attrCurrent}} 立方米</div>
+              </div>
+            </div>
           </div>
         </div>
-      </Panel>
-    </Collapse>
+        <hr/>
+      </div>
+
+    </div>
   </div>
 </template>
 
 <script>
-  import IEcharts from 'vue-echarts-v3/src/full.js';
   export default {
-    components: {
-      IEcharts
-    },
     data(){
       return {
         currWebsocketNumber: '',
         currEquName: '1',
         indexEquipment: {
-          equipmentName: "案例-污水处理设备",
-          equipmentDescribe: "杰出案例展示-污水处理设备实时进水量和排水量检测",
+          equipmentName: "案例展示",
+          equipmentDescribe: "污水处理设备实时进水量和排水量检测",
           equipmentAttribute: [{
             attrName: "进水量",
             attrCommon: 100,
@@ -46,40 +137,21 @@
             }]
         },
         indexChartNUmber: [["100"],["50"]],
-        currTime: '',
-        indexChartTime: [this.currTime],
-        optionData: {
-          title: {text: '实时进水量和排水量'},
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: {
-              type: 'cross'
-            }
-          },
-          toolbox: {
-            show: true,
-            feature: {
-              saveAsImage: {}
-            }
-          },
-          xAxis:{
-            data:this.indexChartTime
-          },
-          series: [{
-            data: ["11","22"],
-            type: 'line'
-          }]
-        }
-
+        indexChartTime: [[],[]]
       }
     },
     mounted(){
+      this.drawCharts(0),
+      this.drawCharts(1),
       this.setPageName(),
       this.getSession()
     },
     methods:{
       setPageName(){
         this.$store.dispatch("setPage",["系统首页"]);
+        let currData = (new Date()).toLocaleTimeString().replace(/^\D*/,'');
+        this.indexChartTime[0].push(currData);
+        this.indexChartTime[1].push(currData);
       },
       // 判断有没有session
       getSession(){
@@ -88,15 +160,11 @@
           url: '/session'
         }).then(function (response) {
           var responseData = response.data;
-          console.log(this.indexChartNUmber[0]);
           if(responseData != '0'){
             this.$store.dispatch("setUser",responseData);
-            // console.log(this.loginOrNot);
           }else{
             this.$store.dispatch("setUser","");
           }
-          var myDate = new Date();
-          this.currTime = myDate.getSeconds();
           this.connectWebSocket();
         }.bind(this)).catch(function (error) {
           alert(error);
@@ -110,24 +178,18 @@
         ws.onopen = function(e) {
           var curr = JSON.stringify(_this.indexEquipment);
           ws.send(curr);
-          // console.log("open");
         };
         ws.onmessage = function(e) {
-          // console.log(e);
           _this.currWebsocketNumber = e.data;
           var currData = e.data.split("|");
           _this.indexEquipment.equipmentAttribute[currData[0]].attrCurrent = currData[1];
-          var currArray = _this.indexChartNUmber[currData[0]];
-          var myDate1 = new Date();
-          if(currArray.length == 10){
-            currArray.splice(0,1);
-            currArray.push(currData[1]);
-            _this.indexChartTime.splice(0,1);
-            _this.indexChartTime.push(myDate1.getSeconds());
-          }else{
-            currArray.push(currData[1]);
-            _this.indexChartTime.push(myDate1.getSeconds());
+          if(_this.indexChartNUmber[currData[0]].length == 10){
+            _this.indexChartNUmber[currData[0]].splice(0,1);
+            _this.indexChartTime[currData[0]].splice(0,1);
           }
+          _this.indexChartNUmber[currData[0]].push(currData[1]);
+          _this.indexChartTime[currData[0]].push((new Date()).toLocaleTimeString().replace(/^\D*/,''));
+          _this.drawCharts(currData[0]);
         };
         ws.onerror = function(e) {
           alert("error");
@@ -135,12 +197,100 @@
         ws.onclose = function(e) {
           // console.log("close");
         };
-      }
-    },
-    stompClient:{
-      monitorIntervalTime: 100,
-      timeout(orgCmd){
-        console.log("timeOut");
+        // 路由跳转时结束websocket链接
+        this.$router.afterEach(function () {
+          ws.close()
+        })
+      },
+
+      drawCharts(index){
+        let myChart = this.$echarts.init(document.getElementsByName('myChart')[index]);
+
+        let currCom = this.indexEquipment.equipmentAttribute[index].attrCommon;
+        let currFlo = this.indexEquipment.equipmentAttribute[index].attrFloat;
+        currCom = Math.round(currCom);
+        currFlo = Math.round(currFlo);
+        let ymin = currCom - currFlo;
+        let ymax = currCom + currFlo;
+        let yCommonMin = currCom - currFlo/2;
+        let yCommonMax = currCom + currFlo/2;
+
+        myChart.setOption({
+          tooltip: {
+            trigger: 'axis'
+          },
+          legend: {
+            orient: 'vertical',
+            left: 'left',
+            data:['正常范围内数据','非正常范围内数据'],
+            selected: {
+              '正常范围内数据' :true,
+              '非正常范围内数据' :true,
+            }
+          },
+          color:['#81b22f','#f3d71c','#f4b9a9'],
+          xAxis: {
+            type: 'category',
+            data: this.indexChartTime[index]
+          },
+          yAxis: {
+            type: 'value',
+            min: ymin,
+            max: ymax
+          },
+          series:[
+            {
+              data: this.indexChartNUmber[index],
+              type: 'line'
+            },
+            {
+              name:'正常范围内数据',
+              type:'line',
+              animation: false,
+              areaStyle: {
+                normal: {}
+              },
+              lineStyle: {
+                normal: {
+                  width: 1
+                }
+              },
+              markArea: {
+                data: [[{
+                  yAxis: yCommonMin
+                }, {
+                  yAxis: yCommonMax
+                }]]
+              },
+
+            },
+            {
+              name:'非正常范围内数据',
+              type:'line',
+              animation: false,
+              areaStyle: {
+                normal: {}
+              },
+              lineStyle: {
+                normal: {
+                  width: 1
+                }
+              },
+              markArea: {
+                data: [[{
+                  yAxis: ymin
+                }, {
+                  yAxis: yCommonMin
+                }],[{
+                  yAxis: yCommonMax
+                }, {
+                  yAxis: ymax
+                }]]
+              }
+
+            }
+          ]
+        });
       }
     }
   }

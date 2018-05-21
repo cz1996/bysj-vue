@@ -6,7 +6,8 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     loginUserName: '',
-    pageName: ["系统首页"]
+    pageName: ["系统首页"],
+    currDeviceInfo: null
   },
   getters: {
 
@@ -17,6 +18,9 @@ export default new Vuex.Store({
     },
     setPageName(state,name){
       state.pageName = name
+    },
+    setCurrDeviceInfo(state,name){
+      state.currDeviceInfo = name
     }
   },
   actions: {
@@ -25,6 +29,9 @@ export default new Vuex.Store({
     },
     setPage(context,name){
       context.commit("setPageName",name)
+    },
+    setCurrDevice(context,name){
+      context.commit("setCurrDeviceInfo",name)
     }
   }
 })

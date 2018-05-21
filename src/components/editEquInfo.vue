@@ -1,7 +1,4 @@
 <style>
-  .deviceList-div{
-    min-height: 510px;
-  }
   .loadingDevice,
   .noDevice{
     padding-top: 100px;
@@ -13,10 +10,12 @@
   }
   .yesDevice{
     width: 100%;
+    position: relative;
   }
-  .deviceListDetail{
-    width: 100%;
+  .deviceListDetailInEdit{
+    width: 80%;
     border: 1px;
+    float: left;
   }
   .deviceListDetail-title{
     width: 100%;
@@ -35,12 +34,19 @@
     width: 80%;
     margin-left: 10%;
   }
-  .deviceList-table{
-
+  .deviceListRight{
+    float: left;
+    width: 20%;
+    min-height: 200px;
+    position: absolute;
+    left: 80%;
+    top:50%;
+    margin-top:-100px;
   }
 </style>
+
 <template>
-  <div class="deviceList-div">
+  <div style="min-height: 510px;">
     <div v-if="haveDevice === 0">
       <div class="loadingDevice">
         正在加载数据......
@@ -54,19 +60,32 @@
     <div v-else>
       <hr>
       <div class="yesDevice" v-for="(item,index) in deviceListObj">
-        <div class="deviceListDetail">
+        <br>
+        <div class="deviceListDetailInEdit">
           <div class="deviceListDetail-title">
             <h2>{{item.equipmentName}}</h2>
           </div>
           <div class="deviceListDetail-describe">
             <div class="describe-item">{{item.equipmentDescribe}}</div>
           </div>
+          <div class="deviceListDetail-table">
+            <div style="display: none" class="getIndex">{{index}}</div>
+            <Table size="large" border :columns="deviceListTableColumn" :data="deviceListData[index]" class="deviceList-table"></Table>
+          </div>
+          <div style="height: 30px;width: 100%"></div>
         </div>
-        <div class="deviceListDetail-table">
-          <div style="display: none" class="getIndex">{{index}}</div>
-          <Table size="large" border :columns="deviceListTableColumn" :data="deviceListData[index]" class="deviceList-table"></Table>
+
+        <div class="deviceListRight">
+          <div style="margin-top: 40px;">
+            <div class="currEquIdDiv" style="display: none;">{{index}}</div>
+            <Button type="success" v-on:click="changeCurrDeviceInEdit" icon="edit" style="width: 60%;font-size: 20px;" size="large">修改</Button>
+          </div>
+
+          <div style="margin-top: 30px;">
+            <Button type="error" v-on:click="deleteCurrDeviceInEdit" icon="trash-a" style="width: 60%;font-size: 20px;" size="large">删除</Button>
+          </div>
         </div>
-        <div style="height: 30px;width: 100%"></div>
+        <div style="clear: both"></div>
         <hr>
       </div>
     </div>
@@ -74,7 +93,7 @@
 </template>
 
 <script>
-  export default {
+  export default{
     data(){
       return{
         haveDevice: 0,
@@ -96,70 +115,17 @@
           {
             title: '浮动数据',
             key: 'attrFloat'
-          },
-          {
-            title: '操作',
-            key: 'action',
-            width: 150,
-            align: 'center',
-            render: (h, params) => {
-              return h('div', [
-                h('Button', {
-                  props: {
-                    type: 'primary'
-                  },
-                  style: {
-                    marginRight: '5px'
-                  },
-                  on: {
-                    click: ($event) => {
-                      var currInfoObj = event.currentTarget;
-                      var curr = $(currInfoObj).parent().parent().parent().parent().parent().parent();
-                      var currNext = $(curr).parent().parent().parent().parent().parent();
-                      var index = $(currNext).find(".getIndex").html();
-                      var currIndex = params.index;
-                      var currInfo = this.deviceListData[index][currIndex];
-                      this.$store.dispatch("setCurrDevice",currInfo);
-                      var currDeviceId = currInfo.attrId;
-
-                      this.axios({
-                        method: 'get',
-                        url: '/viewDeviceInfoById',
-                        params: {
-                          'currDeviceId': currDeviceId
-                        }
-                      }).then(function (response) {
-                        var responseData = response.data;
-                        if(responseData != '0'){
-                          this.$router.push({name: 'deviceInfo'});
-                        }else{
-                          this.$Message.warning({
-                            content:'发生未知错误，请重新操作',
-                            duration: 5
-                          });
-                        }
-                      }.bind(this)).catch(function (error) {
-                        alert(error);
-                      });
-
-                    }
-                  }
-                }, '查看')
-              ]);
-            }
           }
         ],
       }
     },
-
     mounted(){
       this.setPageName(),
       this.getSession()
     },
-
     methods:{
       setPageName(){
-        this.$store.dispatch("setPage",["系统首页","设备列表"]);
+        this.$store.dispatch("setPage",["系统首页","修改设备"]);
       },
       // 判断有没有session
       getSession(){
@@ -168,10 +134,9 @@
           url: '/session'
         }).then(function (response) {
           var responseData = response.data;
-          // console.log(responseData);
           if(responseData != '0'){
             this.$store.dispatch("setUser",responseData);
-            this.getDeviceList();
+            this.getDeviceListInEdit();
           }else{
             this.$store.dispatch("setUser","");
             this.$router.push({name: 'index'});
@@ -180,9 +145,8 @@
           alert(error);
         });
       },
-
       //获取设备列表json
-      getDeviceList(){
+      getDeviceListInEdit(){
         this.axios({
           method: 'get',
           url: '/deviceList'
@@ -211,8 +175,36 @@
 
       changeAddDevicePage(){
         this.$router.push({name: 'addEqu'});
-      }
+      },
 
+      changeCurrDeviceInEdit($event){
+        var currInfoObj = event.currentTarget;
+        var currUseId = $(currInfoObj).parent().find(".currEquIdDiv").html();
+        var currEquId = this.deviceListObj[currUseId].equipmentId;
+        this.axios({
+          method: 'get',
+          url: '/editEquINfoById',
+          params: {
+            'currEquId': currEquId
+          }
+        }).then(function (response) {
+          var responseData = response.data;
+          if(responseData != '0'){
+            this.$router.push({name: 'changeEqu'});
+          }else{
+            this.$Message.warning({
+              content:'发生未知错误，请重新操作',
+              duration: 5
+            });
+          }
+        }.bind(this)).catch(function (error) {
+          alert(error);
+        });
+      },
+
+      deleteCurrDeviceInEdit(){
+
+      }
     }
   }
 </script>

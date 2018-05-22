@@ -190,6 +190,30 @@
           _this.indexChartNUmber[currData[0]].push(currData[1]);
           _this.indexChartTime[currData[0]].push((new Date()).toLocaleTimeString().replace(/^\D*/,''));
           _this.drawCharts(currData[0]);
+
+          var currDataa = parseFloat(currData[1]);
+          var nowCommon = _this.indexEquipment.equipmentAttribute[currData[0]].attrCommon;
+          var nowFloat = _this.indexEquipment.equipmentAttribute[currData[0]].attrFloat;
+          if(currDataa > (parseFloat(nowCommon)+nowFloat/2) || currDataa < (parseFloat(nowCommon)-nowFloat/2)){
+            let currDate = new Date().toLocaleString();
+            let currStr = "在"+currDate+"有非正常数据出现，请检查或者";
+            let currWarningSensorId = '首页测试';
+            _this.$Notice.warning({
+              title: '提示',
+              duration: 0,
+              desc: currStr,
+              render: h => {
+                return h('span', [
+                  currStr,
+                  h('a',{on: {
+                      click: function () {
+                        _this.warningSendToServer(currWarningSensorId);
+                      }
+                    }},'重置数据')
+                ]);
+              }
+            });
+          }
         };
         ws.onerror = function(e) {
           alert("error");
@@ -290,6 +314,31 @@
 
             }
           ]
+        });
+      },
+
+      warningSendToServer(currWarningSensorId){
+        this.axios({
+          method: 'get',
+          url: '/warningSensorId',
+          params: {
+            'currWarningSensorId': currWarningSensorId
+          }
+        }).then(function (response) {
+          var responseData = response.data;
+          if(responseData != '0'){
+            this.$Message.success({
+              content:'重置成功',
+              duration: 5
+            });
+          }else{
+            this.$Message.warning({
+              content:'重置失败',
+              duration: 5
+            });
+          }
+        }.bind(this)).catch(function (error) {
+          alert(error);
         });
       }
     }

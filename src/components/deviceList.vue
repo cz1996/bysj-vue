@@ -38,6 +38,9 @@
   .deviceList-table{
 
   }
+  .ivu-table td.table-info-column-attrCurrent{
+    color: rgb(24, 181, 102);
+  }
 </style>
 <template>
   <div class="deviceList-div">
@@ -64,7 +67,7 @@
         </div>
         <div class="deviceListDetail-table">
           <div style="display: none" class="getIndex">{{index}}</div>
-          <Table size="large" border :columns="deviceListTableColumn" :data="deviceListData[index]" class="deviceList-table"></Table>
+          <Table size="large" border :columns="deviceListTableColumn" :data="currDeviceListData[index]" class="deviceList-table"></Table>
         </div>
         <div style="height: 30px;width: 100%"></div>
         <hr>
@@ -80,6 +83,8 @@
         haveDevice: 0,
         deviceListObj: null,
         deviceListData:[],
+        currDeviceListData:[],
+        sendToDeviceListData:[],
         deviceListTableColumn: [
           {
             title: '设备名称',
@@ -90,12 +95,17 @@
             key: 'attrTiming'
           },
           {
+            title: '浮动数据',
+            key: 'attrFloat'
+          },
+          {
             title: '正常数据',
             key: 'attrCommon'
           },
           {
-            title: '浮动数据',
-            key: 'attrFloat'
+            title: '实时数据',
+            key: 'attrCurrent',
+            className: 'table-info-column-attrCurrent'
           },
           {
             title: '操作',
@@ -197,11 +207,18 @@
             this.deviceListObj = responseObj;
             for(var i = 0;i < responseObj.length;i++) {
               var currList = [];
+              var currNextList = [];
               var currAttr = responseObj[i].equipmentAttribute;
               for (var j = 0; j < currAttr.length;j++) {
                 currList.push(currAttr[j]);
+                var currList2 = JSON.parse(JSON.stringify(currAttr[j]));
+                currList2.attrCurrent = currAttr[j].attrCommon;
+                currNextList.push(currList2);
+                this.sendToDeviceListData.push(currAttr[j]);
               }
               this.deviceListData.push(currList);
+              this.currDeviceListData.push(currNextList);
+              this.connectDeviceListWebSocket();
             }
           }
         }.bind(this)).catch(function (error) {
@@ -209,9 +226,92 @@
         });
       },
 
+      connectDeviceListWebSocket(){
+        var url = "ws://localhost:8081/deviceListWebSocket/"+Math.random();
+        var ws = new WebSocket(url);
+        var _this = this;
+        ws.onopen = function(e) {
+          var curr = JSON.stringify(_this.sendToDeviceListData);
+          ws.send(curr);
+        };
+        ws.onmessage = function(e) {
+          var currData = e.data.split("|");
+          // console.log(currData);
+          var curr = 0;
+          for(var i = 0;i < _this.currDeviceListData.length;i++){
+            var currTableLIst = _this.currDeviceListData[i];
+            for(var j = 0;j < currTableLIst.length;j++){
+              if(curr == currData[0]){
+                _this.currDeviceListData[i][j].attrCurrent = currData[1];
+                var nowCommon = _this.currDeviceListData[i][j].attrCommon;
+                var nowFloat = _this.currDeviceListData[i][j].attrFloat;
+                if(currData[1] > (parseFloat(nowCommon)+nowFloat/2) || currData[1] < (parseFloat(nowCommon)-nowFloat/2)){
+                  let currDate = new Date().toLocaleString();
+                  let currStr = "在"+currDate+"有非正常数据出现，请检查或者";
+                  let currWarningSensorId = _this.currDeviceListData[i][j].attrId;
+                  _this.$Notice.warning({
+                    title: '提示',
+                    duration: 0,
+                    desc: currStr,
+                    render: h => {
+                      return h('span', [
+                        currStr,
+                        h('a',{on: {
+                            click: function () {
+                              _this.warningSendToServer(currWarningSensorId);
+                            }
+                          }},'重置数据')
+                      ]);
+                    }
+                  });
+                }
+              }
+              curr++;
+            }
+          }
+
+        };
+        ws.onerror = function(e) {
+          alert("error");
+        };
+        ws.onclose = function(e) {
+          // console.log("close");
+        };
+        // 路由跳转时结束websocket链接
+        this.$router.afterEach(function () {
+          ws.close()
+        })
+      },
+
       changeAddDevicePage(){
         this.$router.push({name: 'addEqu'});
+      },
+
+      warningSendToServer(currWarningSensorId){
+        this.axios({
+          method: 'get',
+          url: '/warningSensorId',
+          params: {
+            'currWarningSensorId': currWarningSensorId
+          }
+        }).then(function (response) {
+          var responseData = response.data;
+          if(responseData != '0'){
+            this.$Message.success({
+              content:'重置成功',
+              duration: 5
+            });
+          }else{
+            this.$Message.warning({
+              content:'重置失败',
+              duration: 5
+            });
+          }
+        }.bind(this)).catch(function (error) {
+          alert(error);
+        });
       }
+
 
     }
   }

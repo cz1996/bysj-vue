@@ -82,8 +82,23 @@
           </div>
 
           <div style="margin-top: 30px;">
-            <Button type="error" v-on:click="deleteCurrDeviceInEdit" icon="trash-a" style="width: 60%;font-size: 20px;" size="large">删除</Button>
+            <div style="display: none" class="getCurrEquIdInButton">{{index}}</div>
+            <Button type="error" @click="getCurrEquIdAndDelete" icon="trash-a" style="width: 60%;font-size: 20px;" size="large">删除</Button>
           </div>
+
+          <Modal v-model="modalDelete" width="360">
+            <p slot="header" style="color:#f60;text-align:center">
+              <Icon type="information-circled"></Icon>
+              <span>删除设备</span>
+            </p>
+            <div style="text-align:center">
+              <p>删除后不可撤销操作</p>
+              <p>确定要删除吗？</p>
+            </div>
+            <div slot="footer">
+              <Button type="error" size="large" long :loading="false" @click="deleteCurrDeviceInEdit">删除</Button>
+            </div>
+          </Modal>
         </div>
         <div style="clear: both"></div>
         <hr>
@@ -96,9 +111,11 @@
   export default{
     data(){
       return{
+        modalDelete: false,
         haveDevice: 0,
         deviceListObj: null,
         deviceListData:[],
+        currDeleteId: '',
         deviceListTableColumn: [
           {
             title: '设备名称',
@@ -203,7 +220,38 @@
       },
 
       deleteCurrDeviceInEdit(){
+        this.axios({
+          method: 'get',
+          url: '/deleteEquINfoById',
+          params: {
+            'currEquId': this.currDeleteId
+          }
+        }).then(function (response) {
+          var responseData = response.data;
+          if(responseData != '0'){
+            this.$Message.success({
+              content:'删除成功',
+              duration: 5
+            });
+            this.modalDelete = false;
+            window.location.reload();
+          }else{
+            this.$Message.warning({
+              content:'发生未知错误，请重新操作',
+              duration: 5
+            });
+          }
+        }.bind(this)).catch(function (error) {
+          alert(error);
+        });
+      },
 
+      getCurrEquIdAndDelete($event){
+        var currInfoObj = event.currentTarget;
+        var currId = $(currInfoObj).parent().  parent().find(".getCurrEquIdInButton").html();
+        // console.log(currId);
+        this.currDeleteId = this.deviceListObj[currId].equipmentId;
+        this.modalDelete = true;
       }
     }
   }
